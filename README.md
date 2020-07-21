@@ -91,7 +91,7 @@ This project is mostly based on GAIC, and the modules are listed as follows:
 
 It is slightly different from GAIC in practice, as shown below:
 
-GAIC supports RoIs with uncertain aspect ratios and several RoIs with fixed aspect ratios(`1:1, 4:3, 16:9``). In practical applications, image cropping needs to select the cropping area according to the fixed aspect ratio. I modified the code of the bboxes generation part. For RoIs evaluation, I used the GAIC pre-trained model.
+GAIC supports RoIs with uncertain aspect ratios and several RoIs with fixed aspect ratios(`1:1, 4:3, 16:9`). In practical applications, image cropping needs to select the cropping area according to the fixed aspect ratio. I modified the code of the bboxes generation part. For RoIs evaluation, I used the GAIC pre-trained model.
 
 At the same time, in practical applications, when the distribution of people in the picture is not fixed, for example, when two people stand on the left and right sides of the picture, the RoI selected by GAIC may tear the human body. We adopt the face detection method to filter out some non-conformities. The required RoI will be evaluated after.
 
