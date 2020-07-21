@@ -8,7 +8,7 @@ Image auto crop toolbox. Supports image cropping with any aspect ratio, based on
 
 - [Setup](#Setup)
 - [Demo](#Demo)
-- [Different from GAIC](#Different from GAIC)
+- [Different from GAIC](#Different-from-GAIC)
 - [Reference](#Reference)
 - [Citation](#Citation)
 
@@ -34,7 +34,7 @@ cd /path/to/autocrop
 python setup.py install
 ```
 
-**Note: ** If there is errors when compiling CPP and CUDA extensions, you can choose to compile CPP/CUDA api separately.
+**Note **  If there is errors when compiling CPP and CUDA extensions, you can choose to compile CPP/CUDA api separately.
 
 ```shell
 cd autocrop/model/rod_align
@@ -104,7 +104,7 @@ There is a comparison:
 1.  [GAIC: Grid-Anchor-based-Image-Cropping-Pytorch](https://github.com/lld533/Grid-Anchor-based-Image-Cropping-Pytorch) MIT License
 2. [[DSFD-Pytorch-Inference](https://github.com/hukkelas/DSFD-Pytorch-Inference)] [Apache-2.0 License](https://github.com/hukkelas/DSFD-Pytorch-Inference/blob/master/LICENSE)
 
-##Citation
+## Citation
 
 If you find this code useful, remember to cite the original authors:
 
