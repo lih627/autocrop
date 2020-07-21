@@ -34,7 +34,7 @@ cd /path/to/autocrop
 python setup.py install
 ```
 
-**Note **  If there is errors when compiling CPP and CUDA extensions, you can choose to compile CPP/CUDA api separately.
+**Note** : If there is errors when compiling CPP and CUDA extensions, you can choose to compile CPP/CUDA api separately.
 
 ```shell
 cd autocrop/model/rod_align
