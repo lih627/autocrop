@@ -1,0 +1,13 @@
+include *py *md LICENSE *txt
+include autocrop/*py
+include autocrop/model/*py
+include autocrop/model/rod_align/functions/*
+include autocrop/model/rod_align/modules/*
+include autocrop/model/rod_align/src/*
+include autocrop/model/rod_align/*py
+include autocrop/model/roi_align/functions/*
+include autocrop/model/roi_align/modules/*
+include autocrop/model/roi_align/src/*
+include autocrop/model/roi_align/*py
+include misc/*
+include imgs/*
