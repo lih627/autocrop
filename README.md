@@ -87,7 +87,7 @@ cv2.waitKey()
 
 This project is mostly based on GAIC, and the modules are listed as follows:
 
-<img src="./misc/Pipeline.png" alt="pipeline-w" style="zoom:50%;" />
+<img src="https://github.com/lih627/autocrop/blob/master/misc/Pipeline.png?raw=true" alt="pipeline-w" style="zoom:50%;" />
 
 It is slightly different from GAIC in practice, as shown below:
 
@@ -97,12 +97,12 @@ At the same time, in practical applications, when the distribution of people in 
 
 There is a comparison:
 
-<img src="./misc/face_filter.jpg" alt="comparison with face detection - w150" style="zoom:50%;" />
+<img src="https://github.com/lih627/autocrop/blob/master/misc/face_filter.jpg?raw=true" alt="comparison with face detection - w150" style="zoom:50%;" />
 
 ## Reference
 
-1.  [GAIC: Grid-Anchor-based-Image-Cropping-Pytorch](https://github.com/lld533/Grid-Anchor-based-Image-Cropping-Pytorch) MIT License
-2. [[DSFD-Pytorch-Inference](https://github.com/hukkelas/DSFD-Pytorch-Inference)] [Apache-2.0 License](https://github.com/hukkelas/DSFD-Pytorch-Inference/blob/master/LICENSE)
+1. [GAIC: Grid-Anchor-based-Image-Cropping-Pytorch](https://github.com/lld533/Grid-Anchor-based-Image-Cropping-Pytorch) MIT License
+2. [DSFD-Pytorch-Inference](https://github.com/hukkelas/DSFD-Pytorch-Inference) [Apache-2.0 License](https://github.com/hukkelas/DSFD-Pytorch-Inference/blob/master/LICENSE)
 
 ## Citation
 
