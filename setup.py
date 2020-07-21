@@ -102,7 +102,7 @@ setuptools.setup(
     name='auto_crop',
     author='Hao Li',
     author_email='lih627@outlook.com',
-    version='0.2.0',
+    version='0.2.1',
     description='Smart auto cropping tool that supports any aspect ratio',
     long_description=''.join(open('README.md', 'r').readlines()),
     long_description_content_type='text/markdown',
