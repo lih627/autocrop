@@ -36,6 +36,7 @@ class AutoCropper(object):
         :param rgb_img:
         :return:
             bboxes List[np.array[4]] [xmin ymin xmax ymax]
+
         """
         return [enlarge_bbox(bbox) for bbox in self.face_detector.detect(rgb_img)]
 
@@ -58,13 +59,14 @@ class AutoCropper(object):
         id_out = sorted(range(len(out)), key=lambda k: out[k], reverse=True)
         return id_out
 
-    def generate_anchor_bbxoes(self,
+    def generate_anchor_bboxes(self,
                                image,
                                scale_width,
                                scale_height,
                                crop_width,
                                crop_height,
-                               face_bboxes):
+                               face_bboxes,
+                               single_face_center=True):
         """
         See autocrop.utils.generate_bboxes for details
         """
@@ -73,14 +75,16 @@ class AutoCropper(object):
                                scale_height=scale_height,
                                crop_width=crop_width,
                                crop_height=crop_height,
-                               face_bboxes=face_bboxes)
+                               face_bboxes=face_bboxes,
+                               single_face_center=single_face_center)
 
     def crop(self,
              rgb_image,
              topK=1,
              crop_height=None,
              crop_width=None,
-             filter_face=True):
+             filter_face=True,
+             single_face_center=True):
         """
         Crop the image and return TopK crop results' coordinate: List[list]
         coordinate for each bbox is defined as [xmin ymin xmax ymax]
@@ -89,6 +93,9 @@ class AutoCropper(object):
         :param crop_height: height ratio
         :param crop_width: width ratio
         :param filter_face: use face detection to filter roi
+        :param single_face_center: bool
+                        default True, face bbox will in anchor box width center if only
+                        one face in the anchor bbox
         :return:
             cropped bboxes:
             List[list[4]] list[4] : [xmin ymin xmax ymax]
@@ -98,12 +105,13 @@ class AutoCropper(object):
         if self.face_detector and filter_face:
             face_bboxes = self.detect_face(input_img)
 
-        trans_bboxes, source_bboxes = self.generate_anchor_bbxoes(input_img,
+        trans_bboxes, source_bboxes = self.generate_anchor_bboxes(input_img,
                                                                   scale_width=scale_width,
                                                                   scale_height=scale_height,
                                                                   crop_height=crop_height,
                                                                   crop_width=crop_width,
-                                                                  face_bboxes=face_bboxes)
+                                                                  face_bboxes=face_bboxes,
+                                                                  single_face_center=single_face_center)
         roi = []
         for idx, tbbox in enumerate(trans_bboxes):
             roi.append([0, *tbbox])
@@ -116,3 +124,6 @@ class AutoCropper(object):
         for id_ in id_out[:topK]:
             select_bboxes.append([int(round(item)) for item in source_bboxes[id_]])
         return select_bboxes
+
+
+
