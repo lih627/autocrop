@@ -47,10 +47,11 @@ def bbox_visualization(crop_height=1,
     auto_cropper = cropper.AutoCropper(model='mobilenetv2',
                                        cuda=True,
                                        use_face_detector=True)
-    img = cv2.imread('imgs/test2.jpg')
+    img = cv2.imread('imgs/demo.jpg')
     input_img, scale_height, scale_width = resize_image_op(img)
     face_bboxes = auto_cropper.detect_face(input_img)
     raw_face_bboxes = []
+
     for fbbox in face_bboxes:
         tbbox = [int(round(scale_width * fbbox[0])),
                  int(round(scale_height * fbbox[1])),
@@ -58,6 +59,8 @@ def bbox_visualization(crop_height=1,
                  int(round(scale_height * fbbox[3])),
                  ]
         raw_face_bboxes.append(tbbox)
+    print(raw_face_bboxes)
+    print([(x[2] - x[0]) * (x[3] - x[1]) for x in raw_face_bboxes])
     """
     No filter
     """
@@ -140,4 +143,4 @@ def bbox_visualization(crop_height=1,
 
 
 if __name__ == '__main__':
-    bbox_visualization(crop_height=4, crop_width=3)
+    bbox_visualization(crop_height=322, crop_width=436)

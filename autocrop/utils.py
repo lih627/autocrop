@@ -183,17 +183,20 @@ def _filter_single_face_anchor_bbox(face_bbox, anchor_bbox):
     anchor_width_center = (anchor_bbox[0] + anchor_bbox[2]) / 2.0
     left_length = anchor_width_center - face_bbox[0]
     right_length = face_bbox[2] - anchor_width_center
-    # print("f {}, a {}, center {}, left {}, right {}".format(face_bbox,
-    #                                                         anchor_bbox,
-    #                                                         anchor_width_center,
-    #                                                         left_length,
-    #                                                         right_length))
+    # print("f {}, a {}, center {},\n left {}, right {}, ratio {}".format(face_bbox,
+    #                                                                     anchor_bbox,
+    #                                                                     anchor_width_center,
+    #                                                                     left_length,
+    #                                                                     right_length,
+    #                                                                     abs(right_length - left_length) / (
+    #                                                                             right_length + left_length)
+    #                                                                     ))
     if left_length < 0:
         return False
     if right_length < 0:
         return False
     return abs(right_length - left_length) / (right_length + left_length) < 0.5
-    #return True
+
 
 def generate_bboxes(resized_image,
                     scale_height,
@@ -264,7 +267,7 @@ def generate_bboxes(resized_image,
             max_area = max(area)
             filter_face_bboxes = []
             for idx, face_bbox in enumerate(face_bboxes):
-                if area[idx] / max_area > 0.4:
+                if area[idx] / max_area > 0.5:
                     filter_face_bboxes.append(face_bbox)
             ret = {'t_bboxes': [],
                    's_bboxes': [],
