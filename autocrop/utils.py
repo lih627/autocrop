@@ -55,12 +55,13 @@ def _generate_by_bins(image, n_bins=12):
     :param image:
     :param n_bins:
     :return:
-       ---------> w
+       ---------> w (x)
        |
        |
        |
-       | h
-       bboxs:  N * 4 [h1, w1, h2, w2]
+       | h (y)
+       |
+       bboxs:  N * 4 [ymin, xmin,,ymax, xmax]
     """
     h = image.shape[0]
     w = image.shape[1]
@@ -81,6 +82,20 @@ def _generate_by_bins(image, n_bins=12):
 
 
 def _generate_by_steps(image, height_step, width_step):
+    """
+    Generate anchor bboxes by steps
+    :param image: H W C
+    :param height_step: int
+    :param width_step:  int
+    :return:
+       ---------> w (x)
+       |
+       |
+       |
+       | h (y)
+       |
+       bboxs:  N * 4 [ymin, xmin,,ymax, xmax]
+    """
     h, w = image.shape[:2]
     h_bins = round(h // height_step)
     w_bins = round(w // width_step)
@@ -117,6 +132,12 @@ def enlarge_bbox(bbox, factor=1.2):
     :param bbox: [N * C] array
     :return:
         [N * 4] xmin ymin xmax ymax
+        ---------> w (x)
+       |
+       |
+       |
+       | h (y)
+       |
     """
     xmin, ymin, xmax, ymax = bbox[:4]
     cx = (xmin + xmax) / 2.0
@@ -128,7 +149,7 @@ def enlarge_bbox(bbox, factor=1.2):
 
 def bbox_intersect_val(bbox1, bbox2):
     """
-    1: bbox1  in bbox2
+    1: bbox1 in bbox2
     2: bbox2 in bbox1
     3: IoU(bbox1, bbox2) = 0
     0: interset
@@ -146,6 +167,34 @@ def bbox_intersect_val(bbox1, bbox2):
     return 0
 
 
+def _filter_single_face_anchor_bbox(face_bbox, anchor_bbox):
+    """
+    ---------> w (x)
+    |
+    |
+    |
+    | h (y)
+    |
+    Return True if face_bbox in the x-axis center of anchor_bbox
+    :param face_bbox: [xmin ymin xmax ymax]
+    :param anchor_bbox: [xmin ymin xmax ymax]
+    :return: bool
+    """
+    anchor_width_center = (anchor_bbox[0] + anchor_bbox[2]) / 2.0
+    left_length = anchor_width_center - face_bbox[0]
+    right_length = face_bbox[2] - anchor_width_center
+    # print("f {}, a {}, center {}, left {}, right {}".format(face_bbox,
+    #                                                         anchor_bbox,
+    #                                                         anchor_width_center,
+    #                                                         left_length,
+    #                                                         right_length))
+    if left_length < 0:
+        return False
+    if right_length < 0:
+        return False
+    return abs(right_length - left_length) / (right_length + left_length) < 0.5
+    #return True
+
 def generate_bboxes(resized_image,
                     scale_height,
                     scale_width,
@@ -153,7 +202,8 @@ def generate_bboxes(resized_image,
                     crop_width=None,
                     min_step=8,
                     n_bins=14,
-                    face_bboxes=None):
+                    face_bboxes=None,
+                    single_face_center=True):
     """
     generate transformed_bbox and source_bbox.
     Use transformed_bboxes as rois for post-processing.
@@ -162,18 +212,25 @@ def generate_bboxes(resized_image,
          and source_bboxes
          is different
 
-    :param resized_image:
-    :param scale_height:
-    :param scale_width:
+    :param resized_image: resized_img H W 3, one of [H, W] is 255
+    :param scale_height: original image height / resized image height
+    :param scale_width: original image width / resized image width
     :param crop_height:
     :param crop_width:
     :param min_step: the minimum step_size: defalut 8
+    :param single_face_center: bool True: face bbox will in the center of the anchor bboxes
     :return:
-        trans_bboxs  [Nx4] [xmin ymin xmax ymax]
-        source_bboxs [Nx4] [ymin xmin ymax xmax]
+        ---------> w (x)
+        |
+        |
+        |
+        | h (y)
+        |
+        trans_bboxes  [Nx4] [xmin ymin xmax ymax]
+        source_bboxes [Nx4] [xmin ymin xmax ymax]
     """
     if crop_height is None or crop_width is None:
-        bboxs = _generate_by_bins(resized_image, n_bins=n_bins)
+        bboxes = _generate_by_bins(resized_image, n_bins=n_bins)
     else:
         h_w_ratio = crop_height / float(crop_width)
         if h_w_ratio < 1.0:
@@ -182,21 +239,24 @@ def generate_bboxes(resized_image,
         else:
             w_step = min_step
             h_step = round(crop_height * min_step) / float(crop_width)
-        bboxs = _generate_by_steps(resized_image, height_step=h_step, width_step=w_step)
-    # bboxs ymin xim ymax xmax
-    source_bboxs = []
-    trans_bboxs = []
-    for bbox in bboxs:
+        bboxes = _generate_by_steps(resized_image, height_step=h_step, width_step=w_step)
+    # bboxes ymin xim ymax xmax
+    source_bboxes = []
+    trans_bboxes = []
+    for bbox in bboxes:
         # trans_bbox xmin ymin xmax ymax
-        trans_bboxs.append([round(item) for item in [bbox[1], bbox[0],
-                                                     bbox[3], bbox[2]]])
+        trans_bboxes.append([round(item) for item in [bbox[1], bbox[0],
+                                                      bbox[3], bbox[2]]])
         # source ymin xmin ymax xmax
-        source_bboxs.append([round(item) for item in [bbox[1] * scale_width,
-                                                      bbox[0] * scale_height,
-                                                      bbox[3] * scale_width,
-                                                      bbox[2] * scale_height]])
+        source_bboxes.append([round(item) for item in [bbox[1] * scale_width,
+                                                       bbox[0] * scale_height,
+                                                       bbox[3] * scale_width,
+                                                       bbox[2] * scale_height]])
 
     if face_bboxes is not None:
+        """
+        Filter out small faces
+        """
         if len(face_bboxes) > 0:
             area = []
             for item in face_bboxes:
@@ -206,25 +266,48 @@ def generate_bboxes(resized_image,
             for idx, face_bbox in enumerate(face_bboxes):
                 if area[idx] / max_area > 0.4:
                     filter_face_bboxes.append(face_bbox)
-            t_bboxs = []
-            s_bboxs = []
-            for idx, tbbox in enumerate(trans_bboxs):
+            ret = {'t_bboxes': [],
+                   's_bboxes': [],
+                   'num_face': [],
+                   'single_face_bbox': []}
+
+            for idx, tbbox in enumerate(trans_bboxes):
                 is_valied = True
                 can_used = False
+                num_face = 0
+                cur_face_bbox = None
                 for fbbox in filter_face_bboxes:
                     i_val = bbox_intersect_val(tbbox, fbbox)
                     if i_val == 0:
                         is_valied = False
                         break
                     elif i_val == 1 or i_val == 2:
+                        cur_face_bbox = fbbox
+                        num_face += 1
                         can_used = True
                 if is_valied and can_used:
-                    t_bboxs.append(tbbox)
-                    s_bboxs.append(source_bboxs[idx])
-            if len(t_bboxs) > 0:
-                return t_bboxs, s_bboxs
+                    ret['t_bboxes'].append(tbbox)
+                    ret['s_bboxes'].append(source_bboxes[idx])
+                    ret['num_face'].append(num_face)
+                    ret['single_face_bbox'].append(cur_face_bbox)
+            if single_face_center:
+                t_bboxes = []
+                s_bboxes = []
 
-    return trans_bboxs, source_bboxs
+                for idx, num_face in enumerate(ret['num_face']):
+                    if num_face != 1 or _filter_single_face_anchor_bbox(
+                            face_bbox=ret['single_face_bbox'][idx],
+                            anchor_bbox=ret['t_bboxes'][idx]):
+                        t_bboxes.append(ret['t_bboxes'][idx])
+                        s_bboxes.append(ret['s_bboxes'][idx])
+                # print(len(t_bboxes))
+                if len(t_bboxes) > 1:
+                    return t_bboxes, s_bboxes
+
+            if len(ret['t_bboxes']) > 1:
+                return ret['t_bboxes'], ret['s_bboxes']
+
+    return trans_bboxes, source_bboxes
 
 
 if __name__ == '__main__':
