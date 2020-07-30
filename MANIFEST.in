@@ -1,4 +1,8 @@
-include *py *md LICENSE *txt
+include demo.py
+include README.md
+include LICENSE
+include MANIFEST.in
+include visualization.py
 include autocrop/*py
 include autocrop/model/*py
 include autocrop/model/rod_align/functions/*

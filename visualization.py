@@ -143,4 +143,4 @@ def bbox_visualization(crop_height=1,
 
 
 if __name__ == '__main__':
-    bbox_visualization(crop_height=322, crop_width=436)
+    bbox_visualization(crop_height=7, crop_width=5)

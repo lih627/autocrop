@@ -68,7 +68,8 @@ crop_ret = autocropper.crop(img_,
                             topK=1,
                             crop_height=1,
                             crop_width=1,
-                            filter_face=True)
+                            filter_face=True, # True: Crop result will not contain half face
+                            single_face_center=True) # True: face in the crop result's width center
 ```
 
 You can visualize the cropping results
@@ -91,13 +92,25 @@ This project is mostly based on GAIC, and the modules are listed as follows:
 
 It is slightly different from GAIC in practice, as shown below:
 
+1. **We can specify any crop ratio**
+
 GAIC supports RoIs with uncertain aspect ratios and several RoIs with fixed aspect ratios(`1:1, 4:3, 16:9`). In practical applications, image cropping needs to select the cropping area according to the fixed aspect ratio. I modified the code of the bboxes generation part. For RoIs evaluation, I used the GAIC pre-trained model.
+
+2. **If there is only half a face in the bounding box, filter out the bounding box**
 
 At the same time, in practical applications, when the distribution of people in the picture is not fixed, for example, when two people stand on the left and right sides of the picture, the RoI selected by GAIC may tear the human body. We adopt the face detection method to filter out some non-conformities. The required RoI will be evaluated after.
 
 There is a comparison:
 
 <img src="https://github.com/lih627/autocrop/blob/master/misc/face_filter.jpg?raw=true" alt="comparison with face detection - w150" style="zoom:50%;" />
+
+3. **When the bounding box has only one face, the face should be in the middle of the box as much as possible**
+
+We have added additional options when generating anchor boxes. If there is only one face in a RoI, use the RoI with the face in the middle of the RoI's width direction. see `autocrop/cropper.py` for details.
+
+There is a comparison:
+
+<img src="https://github.com/lih627/autocrop/blob/master/misc/face_filter2.jpg?raw=true" alt="comparison with face detection - w150" style="zoom:50%;" />
 
 ## Reference
 
