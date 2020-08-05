@@ -34,10 +34,12 @@ def draw_anchor_bboxes(img, bboxes, shifit=False, color=None, thickness=1):
                     font, 0.5, (0, 0, 0))
 
 
-def bbox_visualization(crop_height=1,
+def bbox_visualization(img_path='imgs/demo.jpg',
+                       crop_height=1,
                        crop_width=1):
     """
     Visualize anchor bboxes:
+    :param img_path
     :param rgb_img:
     :param crop_height:
     :param crop_width:
@@ -47,7 +49,7 @@ def bbox_visualization(crop_height=1,
     auto_cropper = cropper.AutoCropper(model='mobilenetv2',
                                        cuda=True,
                                        use_face_detector=True)
-    img = cv2.imread('imgs/demo.jpg')
+    img = cv2.imread(img_path)
     input_img, scale_height, scale_width = resize_image_op(img)
     face_bboxes = auto_cropper.detect_face(input_img)
     raw_face_bboxes = []
@@ -143,4 +145,4 @@ def bbox_visualization(crop_height=1,
 
 
 if __name__ == '__main__':
-    bbox_visualization(crop_height=7, crop_width=5)
+    bbox_visualization(img_path='imgs/demo.jpg', crop_height=478, crop_width=342)
