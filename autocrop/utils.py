@@ -119,9 +119,12 @@ def _generate_by_steps(image, height_step, width_step):
                     elif w_len * h_len > 0.1 * w * h:
                         annotations[3].append([h_start, w_start, h_end, w_end])
     ret = []
+    cnt = 0
     for k in [0, 1, 2, 3]:
         if annotations[k]:
             ret.extend(annotations[k])
+            cnt += 1
+        if cnt == 1:
             break
     return ret
 
@@ -180,6 +183,8 @@ def _filter_single_face_anchor_bbox(face_bbox, anchor_bbox):
     :param anchor_bbox: [xmin ymin xmax ymax]
     :return: bool
     """
+    if isinstance(face_bbox[0], list):
+        face_bbox = face_bbox[0]
     anchor_width_center = (anchor_bbox[0] + anchor_bbox[2]) / 2.0
     left_length = anchor_width_center - face_bbox[0]
     right_length = face_bbox[2] - anchor_width_center
@@ -198,15 +203,39 @@ def _filter_single_face_anchor_bbox(face_bbox, anchor_bbox):
     return abs(right_length - left_length) / (right_length + left_length) < 0.5
 
 
+def _filter_double_face_anchor_bbox(face_bbox, anchor_bbox):
+    """
+    ---------> w (x)
+    |
+    |
+    |
+    | h (y)
+    |
+    Return True if face_bbox in the x-axis center of anchor_bbox
+    :param face_bboxes: N * 4, N * [xmin ymin xmax ymax]
+    :param anchor_bbox: [xmin ymin xmax ymax]
+    :return: bool
+    """
+    anchor_width_center = (anchor_bbox[0] + anchor_bbox[2]) / 2.0
+    ctr = []
+    for fbbox in face_bbox:
+        ctr.append((fbbox[0] + fbbox[2]) / 2.0)
+    l1 = anchor_width_center - ctr[0]
+    l2 = anchor_width_center - ctr[1]
+    # print(l1, l2)
+    return -1.1 < l1 / l2 < -0.9
+
+
 def generate_bboxes(resized_image,
                     scale_height,
                     scale_width,
                     crop_height=None,
                     crop_width=None,
-                    min_step=8,
+                    min_step=4,
                     n_bins=14,
                     face_bboxes=None,
-                    single_face_center=True):
+                    single_face_center=True,
+                    double_face_center=True):
     """
     generate transformed_bbox and source_bbox.
     Use transformed_bboxes as rois for post-processing.
@@ -247,10 +276,10 @@ def generate_bboxes(resized_image,
     source_bboxes = []
     trans_bboxes = []
     for bbox in bboxes:
-        # trans_bbox xmin ymin xmax ymax
+        # trans_bboxes xmin ymin xmax ymax
         trans_bboxes.append([round(item) for item in [bbox[1], bbox[0],
                                                       bbox[3], bbox[2]]])
-        # source ymin xmin ymax xmax
+        # source_bboxes ymin xmin ymax xmax
         source_bboxes.append([round(item) for item in [bbox[1] * scale_width,
                                                        bbox[0] * scale_height,
                                                        bbox[3] * scale_width,
@@ -272,37 +301,51 @@ def generate_bboxes(resized_image,
             ret = {'t_bboxes': [],
                    's_bboxes': [],
                    'num_face': [],
-                   'single_face_bbox': []}
+                   'face_bboxes': []}
 
             for idx, tbbox in enumerate(trans_bboxes):
                 is_valied = True
                 can_used = False
                 num_face = 0
-                cur_face_bbox = None
+                cur_face_bboxes = []
                 for fbbox in filter_face_bboxes:
                     i_val = bbox_intersect_val(tbbox, fbbox)
                     if i_val == 0:
                         is_valied = False
                         break
-                    elif i_val == 1 or i_val == 2:
-                        cur_face_bbox = fbbox
+                    elif i_val == 2:  # fbbox in tbbox
+                        cur_face_bboxes.append(fbbox)
                         num_face += 1
                         can_used = True
                 if is_valied and can_used:
                     ret['t_bboxes'].append(tbbox)
                     ret['s_bboxes'].append(source_bboxes[idx])
                     ret['num_face'].append(num_face)
-                    ret['single_face_bbox'].append(cur_face_bbox)
-            if single_face_center:
+                    ret['face_bboxes'].append(cur_face_bboxes)
+            if single_face_center or double_face_center:
                 t_bboxes = []
                 s_bboxes = []
 
                 for idx, num_face in enumerate(ret['num_face']):
-                    if num_face != 1 or _filter_single_face_anchor_bbox(
-                            face_bbox=ret['single_face_bbox'][idx],
+                    if num_face not in [1, 2]:
+                        t_bboxes.append(ret['t_bboxes'][idx])
+                        s_bboxes.append(ret['s_bboxes'][idx])
+                    elif num_face == 1 and not single_face_center or _filter_single_face_anchor_bbox(
+                            face_bbox=ret['face_bboxes'][idx],
                             anchor_bbox=ret['t_bboxes'][idx]):
                         t_bboxes.append(ret['t_bboxes'][idx])
                         s_bboxes.append(ret['s_bboxes'][idx])
+                    elif num_face == 2 and (not double_face_center or _filter_double_face_anchor_bbox(
+                            face_bbox=ret['face_bboxes'][idx],
+                            anchor_bbox=ret['t_bboxes'][idx]
+                    )):
+                        t_bboxes.append(ret['t_bboxes'][idx])
+                        s_bboxes.append(ret['s_bboxes'][idx])
+                    # if num_face != 1 or _filter_single_face_anchor_bbox(
+                    #         face_bbox=ret['face_bboxes'][idx],
+                    #         anchor_bbox=ret['t_bboxes'][idx]):
+                    #     t_bboxes.append(ret['t_bboxes'][idx])
+                    #     s_bboxes.append(ret['s_bboxes'][idx])
                 # print(len(t_bboxes))
                 if len(t_bboxes) > 1:
                     return t_bboxes, s_bboxes
